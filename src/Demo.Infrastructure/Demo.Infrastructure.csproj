@@ -8,6 +8,14 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
+  </ItemGroup>
+
+  <!-- Pinned above the transitive versions with known vulnerabilities (NU1903). -->
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" /> <!-- via Hangfire.Core: CVE-2024-21907 -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" /> <!-- via EF Core SQLite: CVE-2025-6965 -->
   </ItemGroup>
 
   <ItemGroup>

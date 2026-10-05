@@ -44,6 +44,16 @@ The codebase is structured following **Clean Architecture** and **Domain-Driven 
    * **Swagger UI:** `https://localhost:<port>/swagger` (or `http://localhost:<port>/swagger`) - Explore and test the API endpoints.
    * **Hangfire Dashboard:** `https://localhost:<port>/hangfire` - Monitor background jobs.
 
+### Exchange Rates (Open Exchange Rates API key)
+The weekly exchange-rate sync (every Monday, 06:00 UTC) needs an Open Exchange Rates App ID. Keep it out of source control with user-secrets:
+```bash
+cd src/Demo.Api
+dotnet user-secrets set "OpenExchangeRates:AppId" "<your-app-id>"
+```
+When no rates are stored yet, a sync is enqueued at startup. You can also trigger it manually from the Hangfire dashboard (**Recurring Jobs → exchange-rate-sync → Trigger now**). Without an App ID the API still runs, but currency conversion returns `503` until rates are stored.
+
+The database schema is managed with EF Core migrations and applied at startup. A `demo.db` created by an older version of the app (with `EnsureCreated`) is not compatible: delete it once and it is recreated.
+
 ### Running Tests
 To execute the unit tests, run the following command from the root directory:
 ```bash
