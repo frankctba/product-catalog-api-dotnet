@@ -12,9 +12,22 @@ public static class ExchangeRatesSetup
 {
     public static IServiceCollection AddInfrastructureExchangeRates(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<OpenExchangeRatesOptions>(configuration.GetSection(OpenExchangeRatesOptions.SectionName));
-        services.Configure<ExchangeRateSyncOptions>(configuration.GetSection(ExchangeRateSyncOptions.SectionName));
+        // AppId is deliberately not required: without it the API still runs and conversions return 503.
+        services.AddOptions<OpenExchangeRatesOptions>()
+            .Bind(configuration.GetSection(OpenExchangeRatesOptions.SectionName))
+            .Validate(o => Uri.TryCreate(o.BaseUrl, UriKind.Absolute, out _),
+                $"{OpenExchangeRatesOptions.SectionName}:BaseUrl must be an absolute URL.")
+            .Validate(o => o.TimeoutSeconds > 0,
+                $"{OpenExchangeRatesOptions.SectionName}:TimeoutSeconds must be greater than 0.")
+            .ValidateOnStart();
 
+        services.AddOptions<ExchangeRateSyncOptions>()
+            .Bind(configuration.GetSection(ExchangeRateSyncOptions.SectionName))
+            .Validate(o => !string.IsNullOrWhiteSpace(o.Cron),
+                $"{ExchangeRateSyncOptions.SectionName}:Cron is required.")
+            .ValidateOnStart();
+
+        // Typed clients are transient by design: IHttpClientFactory manages the underlying handlers.
         services.AddHttpClient<IExchangeRateProvider, OpenExchangeRatesClient>((serviceProvider, client) =>
         {
             var options = serviceProvider.GetRequiredService<IOptions<OpenExchangeRatesOptions>>().Value;
@@ -22,7 +35,8 @@ public static class ExchangeRatesSetup
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
         });
 
-        services.AddTransient<ExchangeRateSyncJob>();
+        // Hangfire creates a DI scope per job execution, so the job and its dependencies share one DbContext.
+        services.AddScoped<ExchangeRateSyncJob>();
 
         return services;
     }

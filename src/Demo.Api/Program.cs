@@ -1,15 +1,9 @@
-using Demo.Application.Common;
-using Demo.Application.Modules;
-using Demo.Domain.Common.Services;
-using Demo.Domain.Modules.ExchangeRates;
-using Demo.Domain.Modules.Inventory;
+using Demo.Application;
 using Demo.Infrastructure;
 using Demo.Infrastructure.ExchangeRates;
-using Demo.Infrastructure.Messaging;
 using Demo.Infrastructure.Persistence;
 using Ecommerce.Api;
 using Hangfire;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,25 +14,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 
-// Setup Configuration
-builder.Services.Configure<CurrencyOptions>(builder.Configuration.GetSection(CurrencyOptions.SectionName));
-
-// Setup Database
-builder.Services.AddDbContext<DemoDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DemoDb")));
-
-// Setup Repositories and Infra
-builder.Services.AddTransient<IProductRepository, ProductRepository>();
-builder.Services.AddTransient<IExchangeRateRepository, ExchangeRateRepository>();
-builder.Services.AddTransient<IMessagePublisher, FakeMessagePublisher>();
-builder.Services.AddInfrastructureExchangeRates(builder.Configuration);
-
-// Setup Modules
-builder.Services.AddTransient<IInventoryModule, InventoryModule>();
-builder.Services.AddTransient<IExchangeRateSyncModule, ExchangeRateSyncModule>();
-
-// Setup Hangfire via Infrastructure
-builder.Services.AddInfrastructureHangfire();
+// Setup Application (modules, options) and Infrastructure (database, repositories, exchange rates, Hangfire)
+builder.Services.AddApplication(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
@@ -59,35 +37,8 @@ app.UseHangfireDashboard();
 
 app.MapControllers();
 
-// Seed Database for Testing
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<DemoDbContext>();
-    db.Database.Migrate();
-
-    if (!db.Products.Any())
-    {
-        db.Products.Add(
-            new Product()
-            {
-                Sku = "SKU1",
-                Name = "Name",
-                Price = 103.30M
-            }
-        );
-
-        db.Products.Add(
-            new Product()
-            {
-                Sku = "SKU2",
-                Name = "Name",
-                Price = 102.20M
-            }
-        );
-
-        db.SaveChanges();
-    }
-}
+// Apply migrations and seed the database for testing
+await app.Services.InitializeDatabase();
 
 // Schedule the weekly exchange-rate sync (and run one now if no rates are stored yet)
 await app.Services.ScheduleExchangeRateSync();

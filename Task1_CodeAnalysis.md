@@ -60,7 +60,7 @@ The findings are judged against the current code and against what comes next:
 | BG-4 | Hangfire storage must move to a production store separately | Background processing | P2 | Prod-DB | Scale-out |
 | INT-1 | No resilient HTTP client design for the external rates API | External integration | P2 | T2 | Step 2 |
 | DOM-1 | No currency concept and no conversion service | Domain | P2 | T3 | Step 3 |
-| ARC-1 | DI lifetimes are all Transient | Architecture | P2 | T2 | Backlog |
+| ARC-1 | DI lifetimes are all Transient | Architecture | P2 | T2 | Quick win |
 | TST-1 | No meaningful tests, and the test project cannot reach Infrastructure or the API | Testing | P2 | Current, T2, T3 | Steps 2–3 |
 | CFG-2 | Base currency is an implicit assumption, not configuration | Configuration | P2 | T3, Multi-region | Backlog |
 | SCL-1 | Migrations and seeding run at startup on every instance | Scalability | P2 | Scale | Scale-out |
@@ -74,7 +74,7 @@ The findings are judged against the current code and against what comes next:
 | DOM-3 | `InventoryModule` is a pass-through with an unused logger | Domain | P3 | Current | Backlog |
 | DOM-4 | Anemic `Product` entity, public setters, no invariants | Domain | P3 | Current | Backlog |
 | ARC-2 | Infrastructure references Application with no reason today | Architecture | P3 | Current | Backlog |
-| ARC-3 | Application and Infrastructure registrations live in `Program.cs` | Architecture | P3 | Current | Backlog |
+| ARC-3 | Application and Infrastructure registrations live in `Program.cs` | Architecture | P3 | Current | Quick win |
 | SEC-3 | No authentication, CORS policy or rate limiting | Security | P3 | Current | Backlog |
 | PERF-1 | No `CancellationToken` propagation | Performance | P3 | Current, T3 | Backlog |
 | PERF-2 | Latest rates are read from the database on every request | Performance | P3 | T3 | Scale-out |
@@ -382,9 +382,9 @@ The roadmap follows Strategy 2.
 | **Step 1 · Minimal foundation** | What Task 2 cannot work without | PER-1 migrations, PER-2 provider-neutral precision, CFG-1 configuration and secrets |
 | **Step 2 · Task 2** | Weekly exchange-rate sync | PER-3 rate tables, PER-9 UTC timestamps, PER-6 atomic save, INT-1 typed HTTP client behind an interface, BG-1 Monday job in UTC, BG-2 sync on startup when no rates exist, TST-1 sync tests |
 | **Step 3 · Task 3** | Catalog with currency conversion | PER-7 listing with paging, PER-8 no-tracking reads, API-1 response DTO with currency, DOM-1 converter, DOM-2 rounding rule, API-3 currency validation, ERR-2 ProblemDetails for the new 400 and 503 responses, TST-1 converter and catalog tests |
-| **Quick wins** | Cheap, visible fixes done alongside | ERR-1 404 for an unknown SKU, SEC-2 pinned package versions, BLD-1 unused package removed |
+| **Quick wins** | Cheap, visible fixes done alongside | ERR-1 404 for an unknown SKU, SEC-2 pinned package versions, BLD-1 unused package removed, ARC-1 Scoped/Singleton lifetimes, ARC-3 `AddApplication()` / `AddInfrastructure()` registration |
 | **Scale-out pack (next)** | The minimum to run multiple instances | PER-4 and PER-5 shared database, BG-4 shared Hangfire storage, SCL-1 deploy-time migrations and seeding, PERF-2 and SCL-2 cache with expiry, OBS-1 health checks, SCL-4 forwarded headers |
-| **Backlog** | Production hardening and clean-up | SEC-1, SEC-3, CFG-2, BG-3, BG-5, API-2, API-4, DOM-3, DOM-4, DOM-5, ARC-1, ARC-2, ARC-3, PERF-1, TST-2, DEAD-1, QLT-1, PER-10, SCL-3, SCL-5 |
+| **Backlog** | Production hardening and clean-up | SEC-1, SEC-3, CFG-2, BG-3, BG-5, API-2, API-4, DOM-3, DOM-4, DOM-5, ARC-2, PERF-1, TST-2, DEAD-1, QLT-1, PER-10, SCL-3, SCL-5 |
 | **Future** | Distributed architecture, only when justified | DST-1 to DST-5 |
 
 **Partial in Strategy 2:** INT-1 without retry policies, PER-6 as a single `SaveChangesAsync`, BG-1 on in-memory storage (the schedule is registered again on every startup, so it survives restarts, but job history does not), ERR-2 only for the cases the new endpoint needs, and TST-1 only for the new logic.
