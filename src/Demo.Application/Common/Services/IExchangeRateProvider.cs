@@ -7,6 +7,6 @@ namespace Demo.Application.Common.Services
     /// </summary>
     public interface IExchangeRateProvider
     {
-        Task<ExchangeRateSnapshot> GetLatestRates(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken);
+        Task<ExchangeRateSnapshot> GetLatestRatesAsync(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken);
     }
 }

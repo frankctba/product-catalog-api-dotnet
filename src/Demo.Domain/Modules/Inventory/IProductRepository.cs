@@ -4,8 +4,8 @@ namespace Demo.Domain.Modules.Inventory
 {
     public interface IProductRepository
     {
-        Task<Product?> GetProduct(string sku);
+        Task<Product?> GetProductAsync(string sku, CancellationToken cancellationToken);
 
-        Task<PagedResult<Product>> GetProducts(int page, int pageSize, CancellationToken cancellationToken);
+        Task<PagedResult<Product>> GetProductsAsync(int page, int pageSize, CancellationToken cancellationToken);
     }
 }

@@ -12,7 +12,7 @@ public class ExchangeRateRepository : IExchangeRateRepository
         _dbContext = dbContext;
     }
 
-    public async Task<bool> SaveSnapshot(ExchangeRateSnapshot snapshot, CancellationToken cancellationToken)
+    public async Task<bool> SaveSnapshotAsync(ExchangeRateSnapshot snapshot, CancellationToken cancellationToken)
     {
         var alreadyStored = await _dbContext.ExchangeRateSnapshots.AnyAsync(s =>
             s.Provider == snapshot.Provider &&
@@ -63,7 +63,7 @@ public class ExchangeRateRepository : IExchangeRateRepository
         return true;
     }
 
-    public async Task<IReadOnlyList<LatestExchangeRate>> GetLatestRates(string baseCurrency, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<LatestExchangeRate>> GetLatestRatesAsync(string baseCurrency, CancellationToken cancellationToken)
     {
         return await _dbContext.LatestExchangeRates
             .AsNoTracking()

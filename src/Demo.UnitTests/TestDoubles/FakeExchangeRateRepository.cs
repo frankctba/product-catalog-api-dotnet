@@ -8,7 +8,7 @@ internal class FakeExchangeRateRepository : IExchangeRateRepository
     public List<ExchangeRateSnapshot> Snapshots { get; } = [];
     public List<LatestExchangeRate> Latest { get; } = [];
 
-    public Task<bool> SaveSnapshot(ExchangeRateSnapshot snapshot, CancellationToken cancellationToken)
+    public Task<bool> SaveSnapshotAsync(ExchangeRateSnapshot snapshot, CancellationToken cancellationToken)
     {
         if (Snapshots.Any(s => s.Provider == snapshot.Provider && s.BaseCurrency == snapshot.BaseCurrency && s.RateTimestampUtc == snapshot.RateTimestampUtc))
         {
@@ -34,6 +34,6 @@ internal class FakeExchangeRateRepository : IExchangeRateRepository
         return Task.FromResult(true);
     }
 
-    public Task<IReadOnlyList<LatestExchangeRate>> GetLatestRates(string baseCurrency, CancellationToken cancellationToken) =>
+    public Task<IReadOnlyList<LatestExchangeRate>> GetLatestRatesAsync(string baseCurrency, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<LatestExchangeRate>>(Latest.Where(r => r.BaseCurrency == baseCurrency).ToList());
 }

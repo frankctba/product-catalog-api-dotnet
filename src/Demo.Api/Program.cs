@@ -2,7 +2,7 @@ using Demo.Application;
 using Demo.Infrastructure;
 using Demo.Infrastructure.ExchangeRates;
 using Demo.Infrastructure.Persistence;
-using Ecommerce.Api;
+using Demo.Api;
 using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,9 +38,9 @@ app.UseHangfireDashboard();
 app.MapControllers();
 
 // Apply migrations and seed the database for testing
-await app.Services.InitializeDatabase();
+await app.Services.InitializeDatabaseAsync();
 
 // Schedule the weekly exchange-rate sync (and run one now if no rates are stored yet)
-await app.Services.ScheduleExchangeRateSync();
+await app.Services.ScheduleExchangeRateSyncAsync();
 
 app.Run();

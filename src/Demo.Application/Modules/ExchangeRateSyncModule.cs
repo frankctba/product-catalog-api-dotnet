@@ -12,10 +12,10 @@ namespace Demo.Application.Modules
         /// Fetches the latest rates for the supported currencies and stores them (history + latest).
         /// Safe to run more than once: an already stored snapshot is skipped.
         /// </summary>
-        Task SyncLatestRates(CancellationToken cancellationToken);
+        Task SyncLatestRatesAsync(CancellationToken cancellationToken);
 
         /// <summary>True when a latest rate is stored for every supported currency.</summary>
-        Task<bool> HasLatestRates(CancellationToken cancellationToken);
+        Task<bool> HasLatestRatesAsync(CancellationToken cancellationToken);
     }
 
     public class ExchangeRateSyncModule : IExchangeRateSyncModule
@@ -38,19 +38,19 @@ namespace Demo.Application.Modules
             _currencyOptions = currencyOptions.Value;
         }
 
-        public async Task SyncLatestRates(CancellationToken cancellationToken)
+        public async Task SyncLatestRatesAsync(CancellationToken cancellationToken)
         {
             var baseCurrency = _currencyOptions.BaseCurrency;
             var currencies = _currencyOptions.SupportedCurrencies;
 
-            var snapshot = await _exchangeRateProvider.GetLatestRates(baseCurrency, currencies, cancellationToken);
+            var snapshot = await _exchangeRateProvider.GetLatestRatesAsync(baseCurrency, currencies, cancellationToken);
 
             Validate(snapshot, baseCurrency, currencies);
 
             // Keep only the configured currencies, in case the provider returns more.
             snapshot.Rates = snapshot.Rates.Where(r => currencies.Contains(r.QuoteCurrency)).ToList();
 
-            var saved = await _exchangeRateRepository.SaveSnapshot(snapshot, cancellationToken);
+            var saved = await _exchangeRateRepository.SaveSnapshotAsync(snapshot, cancellationToken);
 
             if (saved)
             {
@@ -66,9 +66,9 @@ namespace Demo.Application.Modules
             }
         }
 
-        public async Task<bool> HasLatestRates(CancellationToken cancellationToken)
+        public async Task<bool> HasLatestRatesAsync(CancellationToken cancellationToken)
         {
-            var latestRates = await _exchangeRateRepository.GetLatestRates(_currencyOptions.BaseCurrency, cancellationToken);
+            var latestRates = await _exchangeRateRepository.GetLatestRatesAsync(_currencyOptions.BaseCurrency, cancellationToken);
 
             return _currencyOptions.SupportedCurrencies.All(c => latestRates.Any(r => r.QuoteCurrency == c));
         }

@@ -44,7 +44,7 @@ public static class ExchangeRatesSetup
     /// <summary>
     /// Registers the recurring sync and, when no rates are stored yet, enqueues one sync right away.
     /// </summary>
-    public static async Task ScheduleExchangeRateSync(this IServiceProvider serviceProvider)
+    public static async Task ScheduleExchangeRateSyncAsync(this IServiceProvider serviceProvider)
     {
         var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(ExchangeRatesSetup));
         var syncOptions = serviceProvider.GetRequiredService<IOptions<ExchangeRateSyncOptions>>().Value;
@@ -53,7 +53,7 @@ public static class ExchangeRatesSetup
         // AddOrUpdate runs on every startup, so the schedule survives restarts even with in-memory storage.
         serviceProvider.GetRequiredService<IRecurringJobManager>().AddOrUpdate<ExchangeRateSyncJob>(
             ExchangeRateSyncJob.RecurringJobId,
-            job => job.Run(CancellationToken.None),
+            job => job.RunAsync(CancellationToken.None),
             syncOptions.Cron,
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
@@ -73,11 +73,11 @@ public static class ExchangeRatesSetup
         using var scope = serviceProvider.CreateScope();
         var syncModule = scope.ServiceProvider.GetRequiredService<IExchangeRateSyncModule>();
 
-        if (!await syncModule.HasLatestRates(CancellationToken.None))
+        if (!await syncModule.HasLatestRatesAsync(CancellationToken.None))
         {
             logger.LogInformation("No exchange rates stored yet: enqueuing a sync now");
             serviceProvider.GetRequiredService<IBackgroundJobClient>()
-                .Enqueue<ExchangeRateSyncJob>(job => job.Run(CancellationToken.None));
+                .Enqueue<ExchangeRateSyncJob>(job => job.RunAsync(CancellationToken.None));
         }
     }
 }

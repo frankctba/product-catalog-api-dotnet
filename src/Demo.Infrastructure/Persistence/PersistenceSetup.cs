@@ -27,7 +27,7 @@ public static class PersistenceSetup
     /// <summary>
     /// Applies pending migrations and seeds test data when the catalog is empty.
     /// </summary>
-    public static async Task InitializeDatabase(this IServiceProvider serviceProvider)
+    public static async Task InitializeDatabaseAsync(this IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DemoDbContext>();
@@ -37,8 +37,9 @@ public static class PersistenceSetup
         if (!await db.Products.AnyAsync())
         {
             db.Products.AddRange(
-                new Product { Sku = "SKU1", Name = "Name", Price = 103.30M },
-                new Product { Sku = "SKU2", Name = "Name", Price = 102.20M });
+                new Product { Sku = "SKU1", Name = "Classic Leather Jacket", Price = 103.30M },
+                new Product { Sku = "SKU2", Name = "Wool Overcoat", Price = 102.20M },
+                new Product { Sku = "SKU3", Name = "Canvas Sneakers", Price = 59.99M });
 
             await db.SaveChangesAsync();
         }

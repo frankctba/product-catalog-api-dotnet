@@ -19,8 +19,8 @@ public class ExchangeRateSyncJob
 
     [DisableConcurrentExecution(timeoutInSeconds: 600)]
     [AutomaticRetry(Attempts = 3)]
-    public Task Run(CancellationToken cancellationToken)
+    public Task RunAsync(CancellationToken cancellationToken)
     {
-        return _exchangeRateSyncModule.SyncLatestRates(cancellationToken);
+        return _exchangeRateSyncModule.SyncLatestRatesAsync(cancellationToken);
     }
 }

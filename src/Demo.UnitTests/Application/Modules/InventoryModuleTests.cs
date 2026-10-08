@@ -29,7 +29,7 @@ public class InventoryModuleTests
     [InlineData("usd")]
     public async Task GetProducts_WithoutConversion_ReturnsBasePrices(string? currency)
     {
-        var result = await _module.GetProducts(currency, 1, 50, CancellationToken.None);
+        var result = await _module.GetProductsAsync(currency, 1, 50, CancellationToken.None);
 
         Assert.Equal(3, result.TotalCount);
         Assert.All(result.Items, p => Assert.Equal("USD", p.Currency));
@@ -42,10 +42,10 @@ public class InventoryModuleTests
     [InlineData(" Eur ")]
     public async Task GetProducts_WithSupportedCurrency_ConvertsWithLatestRate(string currency)
     {
-        await _exchangeRates.SaveSnapshot(SampleData.Snapshot(Monday.AddDays(-7), ("EUR", 0.9184M)), CancellationToken.None);
-        await _exchangeRates.SaveSnapshot(SampleData.Snapshot(Monday, ("EUR", 0.9201M)), CancellationToken.None);
+        await _exchangeRates.SaveSnapshotAsync(SampleData.Snapshot(Monday.AddDays(-7), ("EUR", 0.9184M)), CancellationToken.None);
+        await _exchangeRates.SaveSnapshotAsync(SampleData.Snapshot(Monday, ("EUR", 0.9201M)), CancellationToken.None);
 
-        var result = await _module.GetProducts(currency, 1, 50, CancellationToken.None);
+        var result = await _module.GetProductsAsync(currency, 1, 50, CancellationToken.None);
 
         Assert.All(result.Items, p => Assert.Equal("EUR", p.Currency));
         Assert.Equal([95.05M, 94.03M, 55.20M], result.Items.Select(p => p.Price));
@@ -57,7 +57,7 @@ public class InventoryModuleTests
     public async Task GetProducts_WithUnsupportedCurrency_Throws(string currency)
     {
         var exception = await Assert.ThrowsAsync<UnsupportedCurrencyException>(
-            () => _module.GetProducts(currency, 1, 50, CancellationToken.None));
+            () => _module.GetProductsAsync(currency, 1, 50, CancellationToken.None));
 
         Assert.Contains("USD, EUR, CAD, GBP, CHF", exception.Message);
     }
@@ -66,13 +66,13 @@ public class InventoryModuleTests
     public async Task GetProducts_WithSupportedCurrencyButNoRate_Throws()
     {
         await Assert.ThrowsAsync<ExchangeRateUnavailableException>(
-            () => _module.GetProducts("GBP", 1, 50, CancellationToken.None));
+            () => _module.GetProductsAsync("GBP", 1, 50, CancellationToken.None));
     }
 
     [Fact]
     public async Task GetProducts_ReturnsRequestedPage()
     {
-        var result = await _module.GetProducts(null, 2, 2, CancellationToken.None);
+        var result = await _module.GetProductsAsync(null, 2, 2, CancellationToken.None);
 
         Assert.Equal(3, result.TotalCount);
         Assert.Equal("SKU3", Assert.Single(result.Items).Sku);
@@ -81,9 +81,9 @@ public class InventoryModuleTests
     [Fact]
     public async Task GetProduct_ReturnsDtoWithBaseCurrency_OrNullWhenUnknown()
     {
-        var product = await _module.GetProduct("SKU1");
+        var product = await _module.GetProductAsync("SKU1", CancellationToken.None);
 
         Assert.Equal(new ProductDto("SKU1", "Classic Leather Jacket", 103.30M, "USD"), product);
-        Assert.Null(await _module.GetProduct("NOPE"));
+        Assert.Null(await _module.GetProductAsync("NOPE", CancellationToken.None));
     }
 }

@@ -9,14 +9,14 @@ namespace Demo.Application.Modules
 {
     public interface IInventoryModule
     {
-        Task<ProductDto?> GetProduct(string sku);
+        Task<ProductDto?> GetProductAsync(string sku, CancellationToken cancellationToken);
 
         /// <summary>
         /// Lists products with prices in the requested currency (the base currency when none is given).
         /// </summary>
         /// <exception cref="UnsupportedCurrencyException">The currency is not supported.</exception>
         /// <exception cref="ExchangeRateUnavailableException">No rate is stored yet for the currency.</exception>
-        Task<PagedResult<ProductDto>> GetProducts(string? currency, int page, int pageSize, CancellationToken cancellationToken);
+        Task<PagedResult<ProductDto>> GetProductsAsync(string? currency, int page, int pageSize, CancellationToken cancellationToken);
     }
 
     public class InventoryModule : IInventoryModule
@@ -39,16 +39,16 @@ namespace Demo.Application.Modules
             _currencyOptions = currencyOptions.Value;
         }
 
-        public async Task<ProductDto?> GetProduct(string sku)
+        public async Task<ProductDto?> GetProductAsync(string sku, CancellationToken cancellationToken)
         {
-            var product = await _productRepository.GetProduct(sku);
+            var product = await _productRepository.GetProductAsync(sku, cancellationToken);
 
             return product is null
                 ? null
                 : new ProductDto(product.Sku, product.Name, product.Price, _currencyOptions.BaseCurrency);
         }
 
-        public async Task<PagedResult<ProductDto>> GetProducts(string? currency, int page, int pageSize, CancellationToken cancellationToken)
+        public async Task<PagedResult<ProductDto>> GetProductsAsync(string? currency, int page, int pageSize, CancellationToken cancellationToken)
         {
             var baseCurrency = _currencyOptions.BaseCurrency;
             var targetCurrency = ResolveTargetCurrency(currency);
@@ -56,7 +56,7 @@ namespace Demo.Application.Modules
                 ? (decimal?)null
                 : await GetLatestRate(baseCurrency, targetCurrency, cancellationToken);
 
-            var products = await _productRepository.GetProducts(page, pageSize, cancellationToken);
+            var products = await _productRepository.GetProductsAsync(page, pageSize, cancellationToken);
 
             var items = products.Items
                 .Select(p => new ProductDto(
@@ -90,7 +90,7 @@ namespace Demo.Application.Modules
 
         private async Task<decimal> GetLatestRate(string baseCurrency, string targetCurrency, CancellationToken cancellationToken)
         {
-            var latestRates = await _exchangeRateRepository.GetLatestRates(baseCurrency, cancellationToken);
+            var latestRates = await _exchangeRateRepository.GetLatestRatesAsync(baseCurrency, cancellationToken);
             var latest = latestRates.FirstOrDefault(r => r.QuoteCurrency == targetCurrency);
 
             if (latest is null)

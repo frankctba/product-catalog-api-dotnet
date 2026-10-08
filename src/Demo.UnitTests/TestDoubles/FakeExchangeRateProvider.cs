@@ -11,7 +11,7 @@ internal class FakeExchangeRateProvider : IExchangeRateProvider
 
     public int Calls { get; private set; }
 
-    public Task<ExchangeRateSnapshot> GetLatestRates(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken)
+    public Task<ExchangeRateSnapshot> GetLatestRatesAsync(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken)
     {
         Calls++;
         return Task.FromResult(_next());

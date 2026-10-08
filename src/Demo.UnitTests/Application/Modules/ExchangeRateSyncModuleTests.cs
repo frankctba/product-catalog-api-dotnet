@@ -26,11 +26,11 @@ public class ExchangeRateSyncModuleTests
     {
         var module = CreateModule(() => AllRates(Monday));
 
-        await module.SyncLatestRates(CancellationToken.None);
+        await module.SyncLatestRatesAsync(CancellationToken.None);
 
         Assert.Single(_repository.Snapshots);
         Assert.Equal(4, _repository.Latest.Count);
-        Assert.True(await module.HasLatestRates(CancellationToken.None));
+        Assert.True(await module.HasLatestRatesAsync(CancellationToken.None));
     }
 
     [Fact]
@@ -38,8 +38,8 @@ public class ExchangeRateSyncModuleTests
     {
         var module = CreateModule(() => AllRates(Monday));
 
-        await module.SyncLatestRates(CancellationToken.None);
-        await module.SyncLatestRates(CancellationToken.None);
+        await module.SyncLatestRatesAsync(CancellationToken.None);
+        await module.SyncLatestRatesAsync(CancellationToken.None);
 
         Assert.Single(_repository.Snapshots);
     }
@@ -47,11 +47,11 @@ public class ExchangeRateSyncModuleTests
     [Fact]
     public async Task SyncLatestRates_NewerPublication_KeepsHistoryAndUpdatesLatest()
     {
-        await CreateModule(() => AllRates(Monday.AddDays(-7))).SyncLatestRates(CancellationToken.None);
+        await CreateModule(() => AllRates(Monday.AddDays(-7))).SyncLatestRatesAsync(CancellationToken.None);
 
         var newer = AllRates(Monday);
         newer.Rates.Single(r => r.QuoteCurrency == "EUR").Rate = 0.9300M;
-        await CreateModule(() => newer).SyncLatestRates(CancellationToken.None);
+        await CreateModule(() => newer).SyncLatestRatesAsync(CancellationToken.None);
 
         Assert.Equal(2, _repository.Snapshots.Count);
         Assert.Equal(0.9300M, _repository.Latest.Single(r => r.QuoteCurrency == "EUR").Rate);
@@ -63,7 +63,7 @@ public class ExchangeRateSyncModuleTests
         var response = AllRates(Monday);
         response.Rates.Add(new ExchangeRate { QuoteCurrency = "JPY", Rate = 147.5M });
 
-        await CreateModule(() => response).SyncLatestRates(CancellationToken.None);
+        await CreateModule(() => response).SyncLatestRatesAsync(CancellationToken.None);
 
         Assert.DoesNotContain(_repository.Latest, r => r.QuoteCurrency == "JPY");
     }
@@ -73,11 +73,11 @@ public class ExchangeRateSyncModuleTests
     {
         var module = CreateModule(() => SampleData.Snapshot(Monday, ("EUR", 0.9201M), ("CAD", 1.3816M)));
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => module.SyncLatestRates(CancellationToken.None));
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => module.SyncLatestRatesAsync(CancellationToken.None));
 
         Assert.Contains("GBP, CHF", exception.Message);
         Assert.Empty(_repository.Snapshots);
-        Assert.False(await module.HasLatestRates(CancellationToken.None));
+        Assert.False(await module.HasLatestRatesAsync(CancellationToken.None));
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class ExchangeRateSyncModuleTests
         var response = AllRates(Monday);
         response.Rates.Single(r => r.QuoteCurrency == "GBP").Rate = 0;
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => CreateModule(() => response).SyncLatestRates(CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => CreateModule(() => response).SyncLatestRatesAsync(CancellationToken.None));
 
         Assert.Empty(_repository.Snapshots);
     }
@@ -97,7 +97,7 @@ public class ExchangeRateSyncModuleTests
         var response = AllRates(Monday);
         response.BaseCurrency = "EUR";
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => CreateModule(() => response).SyncLatestRates(CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => CreateModule(() => response).SyncLatestRatesAsync(CancellationToken.None));
 
         Assert.Empty(_repository.Snapshots);
     }

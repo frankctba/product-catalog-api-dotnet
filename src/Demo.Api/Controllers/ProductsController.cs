@@ -2,15 +2,15 @@ using System.ComponentModel.DataAnnotations;
 using Demo.Application.Modules;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Ecommerce.Api.Controllers;
+namespace Demo.Api.Controllers;
 
 [ApiController]
 [Route("api/products")]
-public class ProductController : ControllerBase
+public class ProductsController : ControllerBase
 {
     private readonly IInventoryModule _inventoryModule;
 
-    public ProductController(
+    public ProductsController(
         IInventoryModule inventoryModule
     )
     {
@@ -27,15 +27,15 @@ public class ProductController : ControllerBase
         [FromQuery, Range(1, 100)] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var products = await _inventoryModule.GetProducts(currency, page, pageSize, cancellationToken);
+        var products = await _inventoryModule.GetProductsAsync(currency, page, pageSize, cancellationToken);
 
         return Ok(products);
     }
 
     [HttpGet("{sku}")]
-    public async Task<IActionResult> GetProduct(string sku)
+    public async Task<IActionResult> GetProduct(string sku, CancellationToken cancellationToken)
     {
-        var product = await _inventoryModule.GetProduct(sku);
+        var product = await _inventoryModule.GetProductAsync(sku, cancellationToken);
 
         return product is null ? NotFound() : Ok(product);
     }

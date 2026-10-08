@@ -24,7 +24,7 @@ public class OpenExchangeRatesClient : IExchangeRateProvider
         _options = options.Value;
     }
 
-    public async Task<ExchangeRateSnapshot> GetLatestRates(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken)
+    public async Task<ExchangeRateSnapshot> GetLatestRatesAsync(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_options.AppId))
         {

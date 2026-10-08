@@ -13,14 +13,14 @@ public class ProductRepository : IProductRepository
         _dbContext = dbContext;
     }
 
-    public async Task<Product?> GetProduct(string sku)
+    public async Task<Product?> GetProductAsync(string sku, CancellationToken cancellationToken)
     {
         return await _dbContext.Products
             .AsNoTracking()
-            .SingleOrDefaultAsync(p => p.Sku == sku);
+            .SingleOrDefaultAsync(p => p.Sku == sku, cancellationToken);
     }
 
-    public async Task<PagedResult<Product>> GetProducts(int page, int pageSize, CancellationToken cancellationToken)
+    public async Task<PagedResult<Product>> GetProductsAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
         var query = _dbContext.Products.AsNoTracking();
 

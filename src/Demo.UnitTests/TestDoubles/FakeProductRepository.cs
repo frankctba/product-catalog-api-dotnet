@@ -9,9 +9,9 @@ internal class FakeProductRepository : IProductRepository
 
     public FakeProductRepository(List<Product> products) => _products = products;
 
-    public Task<Product?> GetProduct(string sku) => Task.FromResult(_products.SingleOrDefault(p => p.Sku == sku));
+    public Task<Product?> GetProductAsync(string sku, CancellationToken cancellationToken) => Task.FromResult(_products.SingleOrDefault(p => p.Sku == sku));
 
-    public Task<PagedResult<Product>> GetProducts(int page, int pageSize, CancellationToken cancellationToken)
+    public Task<PagedResult<Product>> GetProductsAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
         var items = _products.OrderBy(p => p.Sku).Skip((page - 1) * pageSize).Take(pageSize).ToList();
         return Task.FromResult(new PagedResult<Product>(items, page, pageSize, _products.Count));

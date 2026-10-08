@@ -2,7 +2,7 @@ using Demo.Application.Common;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Ecommerce.Api;
+namespace Demo.Api;
 
 /// <summary>
 /// Maps known application exceptions to ProblemDetails responses. Anything else becomes a generic 500.
