@@ -28,9 +28,9 @@ The codebase is structured following **Clean Architecture** and **Domain-Driven 
 
 ### Running the Application
 
-1. **Restore dependencies and build the solution:**
+1. **Restore dependencies and build the solution** (from the root directory):
    ```bash
-   dotnet build
+   dotnet build src/DemoSolution.slnx
    ```
 
 2. **Run the API:**
@@ -55,10 +55,15 @@ When no rates are stored yet, a sync is enqueued at startup. You can also trigge
 The database schema is managed with EF Core migrations and applied at startup. A `demo.db` created by an older version of the app (with `EnsureCreated`) is not compatible: delete it once and it is recreated.
 
 ### Running Tests
-To execute the unit tests, run the following command from the root directory:
+To execute the unit and integration tests, run the following command from the root directory:
 ```bash
-dotnet test
+dotnet test src/DemoSolution.slnx
 ```
+
+---
+
+## ✅ Solution
+What was delivered, the main design decisions and the known limitations are summarised in **[SOLUTION.md](SOLUTION.md)**.
 
 ---
 

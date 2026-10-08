@@ -36,7 +36,7 @@ The findings are judged against the current code and against what comes next:
 
 **Driver** says why the item matters: **Current** = a problem in the starter code as it is. **T2** / **T3** = becomes important because of Task 2 / Task 3. **Prod-DB** = needed to move to a production database. **Scale** = needed to run more than one instance. **Multi-region** = needed for deployments with different base currencies.
 
-**Phase** says when the item is addressed in the recommended plan (Strategy 2, see [Remediation roadmap](#remediation-roadmap)): **Step 1–3** = implemented with Tasks 2 and 3. **Quick win** = cheap, done alongside. **Scale-out** = the next step, needed to run multiple instances. **Backlog** = documented, not implemented yet.
+**Phase** says when the item is addressed in the recommended plan (Strategy 2, see [Remediation roadmap](#remediation-roadmap)): **Step 1–3** = implemented with Tasks 2 and 3. **Quick win** = cheap, done alongside. **Review hardening** = done before the review to close visible gaps. **Scale-out** = the next step, needed to run multiple instances. **Backlog** = documented, not implemented yet.
 
 ### Summary
 | ID | Finding | Category | Priority | Driver | Phase |
@@ -50,7 +50,7 @@ The findings are judged against the current code and against what comes next:
 | BG-1 | Hangfire uses in-memory storage and has no jobs | Background processing | P1 | T2 | Step 2 |
 | BG-2 | Cold start: no rates exist until the first Monday | Background processing | P1 | T2, T3 | Step 2 |
 | API-1 | API returns the domain entity directly, no currency in the payload | API design | P1 | Current, T3 | Step 3 |
-| SEC-1 | Hangfire dashboard has no explicit authorization | Security | P1 | Current | Backlog |
+| SEC-1 | Hangfire dashboard has no explicit authorization | Security | P1 | Current | Review hardening (partial) |
 | SEC-2 | Vulnerable transitive packages | Security | P1 | Current | Quick win |
 | PER-4 | Provider choice and database setup live in `Program.cs` | Persistence | P2 | Prod-DB | Scale-out |
 | PER-5 | `Sku` has no length or collation, so case sensitivity differs between providers | Persistence | P2 | Prod-DB | Scale-out |
@@ -69,14 +69,14 @@ The findings are judged against the current code and against what comes next:
 | BG-5 | Hangfire options are not configurable | Background processing | P3 | T2 | Backlog |
 | API-2 | No input validation on `sku` | API design | P3 | Current | Backlog |
 | API-3 | `currency` parameter needs validation and a defined error | API design | P3 | T3 | Step 3 |
-| API-4 | Endpoint has no response-type documentation | API design | P3 | Current, T3 | Backlog |
+| API-4 | Endpoint has no response-type documentation | API design | P3 | Current, T3 | Review hardening |
 | DOM-2 | Rounding policy for converted prices is undefined | Domain | P3 | T3 | Step 3 |
-| DOM-3 | `InventoryModule` is a pass-through with an unused logger | Domain | P3 | Current | Backlog |
-| DOM-4 | Anemic `Product` entity, public setters, no invariants | Domain | P3 | Current | Backlog |
+| DOM-3 | `InventoryModule` is a pass-through with an unused logger | Domain | P3 | Current | Step 3 |
+| DOM-4 | Anemic `Product` entity, public setters, no invariants | Domain | P3 | Current | Review hardening |
 | ARC-2 | Infrastructure references Application with no reason today | Architecture | P3 | Current | Backlog |
 | ARC-3 | Application and Infrastructure registrations live in `Program.cs` | Architecture | P3 | Current | Quick win |
 | SEC-3 | No authentication, CORS policy or rate limiting | Security | P3 | Current | Backlog |
-| PERF-1 | No `CancellationToken` propagation | Performance | P3 | Current, T3 | Backlog |
+| PERF-1 | No `CancellationToken` propagation | Performance | P3 | Current, T3 | Review hardening |
 | PERF-2 | Latest rates are read from the database on every request | Performance | P3 | T3 | Scale-out |
 | TST-2 | No integration tests against the target database | Testing | P3 | Prod-DB | Backlog |
 | OBS-1 | No health checks, noisy EF logging, no correlation | Observability | P3 | Current | Scale-out |
@@ -84,9 +84,9 @@ The findings are judged against the current code and against what comes next:
 | SCL-2 | In-process cache cannot be invalidated across instances | Scalability | P3 | Scale | Scale-out |
 | SCL-3 | Rate limiting would apply per instance | Scalability | P3 | Scale | Backlog |
 | SCL-4 | No forwarded-headers handling behind a load balancer | Scalability | P3 | Scale | Scale-out |
-| PER-10 | Seed data is not meaningful | Persistence | P4 | Current | Backlog |
+| PER-10 | Seed data is not meaningful | Persistence | P4 | Current | Review hardening |
 | DOM-5 | `IMessagePublisher` placement in Domain | Domain | P4 | Current | Backlog |
-| QLT-1 | Naming and file inconsistencies | Code quality | P4 | Current | Backlog |
+| QLT-1 | Naming and file inconsistencies | Code quality | P4 | Current | Review hardening |
 | BLD-1 | Redundant package reference and duplicated project settings | Build / tooling | P4 | Current | Quick win |
 | SCL-5 | No DbContext pooling or shared output cache | Scalability | P4 | Scale | Backlog |
 
@@ -383,13 +383,14 @@ The roadmap follows Strategy 2.
 | **Step 2 · Task 2** | Weekly exchange-rate sync | PER-3 rate tables, PER-9 UTC timestamps, PER-6 atomic save, INT-1 typed HTTP client behind an interface, BG-1 Monday job in UTC, BG-2 sync on startup when no rates exist, TST-1 sync tests |
 | **Step 3 · Task 3** | Catalog with currency conversion | PER-7 listing with paging, PER-8 no-tracking reads, API-1 response DTO with currency, DOM-1 converter, DOM-2 rounding rule, API-3 currency validation, ERR-2 ProblemDetails for the new 400 and 503 responses, TST-1 converter and catalog tests |
 | **Quick wins** | Cheap, visible fixes done alongside | ERR-1 404 for an unknown SKU, SEC-2 pinned package versions, BLD-1 unused package removed, ARC-1 Scoped/Singleton lifetimes, ARC-3 `AddApplication()` / `AddInfrastructure()` registration |
+| **Review hardening** | Close the gaps a reviewer would see first | DOM-4 invariants in the entities (also for the new exchange-rate entities), QLT-1 naming and `Async` suffix, PERF-1 cancellation tokens on every path, API-4 Swagger response types, PER-10 realistic seed data, SEC-1 dashboard access rule made explicit, TST-1 integration tests for the real repositories, HTTP client and API |
 | **Scale-out pack (next)** | The minimum to run multiple instances | PER-4 and PER-5 shared database, BG-4 shared Hangfire storage, SCL-1 deploy-time migrations and seeding, PERF-2 and SCL-2 cache with expiry, OBS-1 health checks, SCL-4 forwarded headers |
-| **Backlog** | Production hardening and clean-up | SEC-1, SEC-3, CFG-2, BG-3, BG-5, API-2, API-4, DOM-3, DOM-4, DOM-5, ARC-2, PERF-1, TST-2, DEAD-1, QLT-1, PER-10, SCL-3, SCL-5 |
+| **Backlog** | Production hardening and clean-up | SEC-1 (role-based filter), SEC-3, CFG-2, BG-3, BG-5, API-2, DOM-5, ARC-2, TST-2, DEAD-1, BLD-1 (shared build props), SCL-3, SCL-5 |
 | **Future** | Distributed architecture, only when justified | DST-1 to DST-5 |
 
-**Partial in Strategy 2:** INT-1 without retry policies, PER-6 as a single `SaveChangesAsync`, BG-1 on in-memory storage (the schedule is registered again on every startup, so it survives restarts, but job history does not), ERR-2 only for the cases the new endpoint needs, and TST-1 only for the new logic.
+**Partial in Strategy 2:** PER-6 as a single `SaveChangesAsync` (no unit-of-work abstraction), BG-1 on in-memory storage (the schedule is registered again on every startup, so it survives restarts, but job history does not), ERR-2 only for the cases the API needs, and TST-2: the integration tests run on SQLite, not on a production database.
 
-**P1 items not in Strategy 2:** SEC-1 (dashboard authorization). The default Hangfire filter only allows local requests, which is safe for a single local instance. It must be done before any deployment.
+**P1 items only partly done:** SEC-1 (dashboard authorization). The dashboard now explicitly allows local requests only, which is safe for a single local instance. A role-based filter needs authentication (SEC-3) and must be in place before any deployment.
 
 ### Notes
 - Task 3 says it depends on "Task 1 (Exchange Rate Synchronization)". This appears to mean **Task 2**.
