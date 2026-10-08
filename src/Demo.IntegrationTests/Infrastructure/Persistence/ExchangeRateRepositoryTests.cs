@@ -1,14 +1,21 @@
 using Demo.Domain.Modules.ExchangeRates;
 using Demo.Infrastructure.Persistence;
+using Demo.IntegrationTests.Databases;
 using Microsoft.EntityFrameworkCore;
 
 namespace Demo.IntegrationTests.Infrastructure.Persistence;
 
-public sealed class ExchangeRateRepositoryTests : IDisposable
+/// <summary>
+/// Written once, run against every provider: see the derived classes under Databases/.
+/// </summary>
+public abstract class ExchangeRateRepositoryTests<TDatabase> : IDisposable
+    where TDatabase : ITestDatabase, new()
 {
     private static readonly DateTime Monday = new(2026, 9, 28, 5, 0, 0, DateTimeKind.Utc);
 
-    private readonly SqliteTestDatabase _database = new();
+    private readonly TDatabase _database = new();
+
+    protected ExchangeRateRepositoryTests() => _database.Migrate();
 
     public void Dispose() => _database.Dispose();
 
