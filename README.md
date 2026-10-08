@@ -17,6 +17,10 @@ The codebase is structured following **Clean Architecture** and **Domain-Driven 
 
 Application code lives in `src/` and tests in `tests/`. The solution file, `DemoSolution.slnx`, is at the root.
 
+The current architecture is documented, with diagrams, in [`docs/architecture/`](docs/architecture/):
+* **[overview.md](docs/architecture/overview.md)**: projects and how they depend on each other, configuration, the catalog request flow (`GET /api/products?currency=...`) and the weekly exchange-rate sync, including how failures are handled.
+* **[data-model.md](docs/architecture/data-model.md)**: the database tables, their keys and rules, with sample records.
+
 ## 🛠️ Tech Stack
 * **Framework:** .NET 10.0
 * **Persistence:** Entity Framework Core with SQLite (used for simplicity so no external database setup is required)
@@ -66,7 +70,7 @@ dotnet test
 ---
 
 ## ✅ Solution
-What was delivered, the main design decisions and the known limitations are summarised in **[SOLUTION.md](SOLUTION.md)**.
+The findings, what was changed and what is still open are in **[Task1_CodeAnalysis.md](Task1_CodeAnalysis.md)**. Diagrams of the architecture and the data model are in **[docs/architecture/](docs/architecture/overview.md)**.
 
 ---
 
