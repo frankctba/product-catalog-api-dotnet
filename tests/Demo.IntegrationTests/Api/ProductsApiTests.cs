@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Demo.Application.Modules;
 using Demo.Domain.Common;
+using Demo.IntegrationTests.Databases;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Demo.IntegrationTests.Api;
@@ -9,15 +10,17 @@ namespace Demo.IntegrationTests.Api;
 /// <summary>
 /// End-to-end tests through HTTP: routing, validation, the exception handler, the database and the seed data.
 /// The tests share one API instance; only EUR and GBP rates are ever stored, so CHF always has no rate.
+/// Written once, run against every provider: see the derived classes under Databases/.
 /// </summary>
-public class ProductsApiTests : IClassFixture<CatalogApiFactory>
+public abstract class ProductsApiTests<TDatabase> : IClassFixture<CatalogApiFactory<TDatabase>>
+    where TDatabase : ITestDatabase, new()
 {
     private static readonly DateTime Monday = new(2026, 9, 28, 5, 0, 0, DateTimeKind.Utc);
 
-    private readonly CatalogApiFactory _factory;
+    private readonly CatalogApiFactory<TDatabase> _factory;
     private readonly HttpClient _client;
 
-    public ProductsApiTests(CatalogApiFactory factory)
+    protected ProductsApiTests(CatalogApiFactory<TDatabase> factory)
     {
         _factory = factory;
         _client = factory.CreateClient();

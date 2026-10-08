@@ -1,14 +1,21 @@
 using Demo.Domain.Modules.Inventory;
 using Demo.Infrastructure.Persistence;
+using Demo.IntegrationTests.Databases;
 
 namespace Demo.IntegrationTests.Infrastructure.Persistence;
 
-public sealed class ProductRepositoryTests : IDisposable
+/// <summary>
+/// Written once, run against every provider: see the derived classes under Databases/.
+/// </summary>
+public abstract class ProductRepositoryTests<TDatabase> : IDisposable
+    where TDatabase : ITestDatabase, new()
 {
-    private readonly SqliteTestDatabase _database = new();
+    private readonly TDatabase _database = new();
 
-    public ProductRepositoryTests()
+    protected ProductRepositoryTests()
     {
+        _database.Migrate();
+
         using var context = _database.CreateContext();
         context.Products.AddRange(
             new Product("SKU3", "Canvas Sneakers", 59.99M),

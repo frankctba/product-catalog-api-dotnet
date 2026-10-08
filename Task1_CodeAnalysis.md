@@ -303,6 +303,7 @@ All three are rated High and arrive transitively.
 **TST-2 · No integration tests against the target database (P3)**
 - Why it matters: SQLite tests do not prove the behaviour of the production database (collation, decimals, dates).
 - Direction: integration tests against the real target, for example SQL Server with Testcontainers, once that database is chosen.
+- Prepared: the integration tests are written once against an `ITestDatabase` abstraction, and a small class per suite picks the provider (today only SQLite). Adding the production database means adding its provider, migrations and an `ITestDatabase` implementation; the tests themselves do not change.
 
 ### 12. Observability
 
@@ -388,7 +389,7 @@ The roadmap follows Strategy 2.
 | **Backlog** | Production hardening and clean-up | SEC-1 (role-based filter), SEC-3, CFG-2, BG-3, BG-5, API-2, DOM-5, ARC-2, TST-2, DEAD-1, BLD-1 (shared build props), SCL-3, SCL-5 |
 | **Future** | Distributed architecture, only when justified | DST-1 to DST-5 |
 
-**Partial in Strategy 2:** PER-6 as a single `SaveChangesAsync` (no unit-of-work abstraction), BG-1 on in-memory storage (the schedule is registered again on every startup, so it survives restarts, but job history does not), ERR-2 only for the cases the API needs, and TST-2: the integration tests run on SQLite, not on a production database.
+**Partial in Strategy 2:** PER-6 as a single `SaveChangesAsync` (no unit-of-work abstraction), BG-1 on in-memory storage (the schedule is registered again on every startup, so it survives restarts, but job history does not), ERR-2 only for the cases the API needs, and TST-2: the integration tests are provider-independent but run on SQLite only, not on a production database yet.
 
 **P1 items only partly done:** SEC-1 (dashboard authorization). The dashboard now explicitly allows local requests only, which is safe for a single local instance. A role-based filter needs authentication (SEC-3) and must be in place before any deployment.
 

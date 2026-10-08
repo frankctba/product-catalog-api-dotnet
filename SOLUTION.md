@@ -28,7 +28,7 @@ dotnet run --launch-profile http
 
 - Swagger: http://localhost:5022/swagger. Hangfire: http://localhost:5022/hangfire.
 - Without an App ID the API still runs, and conversions return 503 until rates are stored.
-- `dotnet test src/DemoSolution.slnx` runs 74 tests. CI runs the same tests on every push and fails on vulnerable packages.
+- `dotnet test` (from the root) runs 74 tests. CI runs the same tests on every push and fails on vulnerable packages.
 
 ## Architecture
 
@@ -63,7 +63,20 @@ dotnet run --launch-profile http
 | Project | Covers |
 |---|---|
 | `Demo.UnitTests` (46) | Domain invariants, conversion and rounding, catalog logic and validation, sync use case, using in-memory test doubles |
-| `Demo.IntegrationTests` (28) | Real repositories on SQLite with the migrations applied, the HTTP client with a stub handler and its resilience pipeline, and the API end to end with `WebApplicationFactory` |
+| `Demo.IntegrationTests` (28) | Real repositories with the migrations applied, the HTTP client with a stub handler and its resilience pipeline, and the API end to end with `WebApplicationFactory` |
+
+**The integration tests do not depend on a database provider.** Database tests passing on SQLite would prove nothing once production uses another database. So each suite is written once, against an `ITestDatabase` abstraction, and a small class per provider runs it:
+
+```
+tests/Demo.IntegrationTests/
+  Infrastructure/Persistence/ExchangeRateRepositoryTests<TDatabase>   ← the tests, written once
+  Infrastructure/Persistence/ProductRepositoryTests<TDatabase>
+  Api/ProductsApiTests<TDatabase>        ← the API on whichever database the fixture provides
+  Databases/ITestDatabase                ← "give me an empty real database"
+  Databases/Sqlite/                      ← SqliteTestDatabase + one class per suite
+```
+
+The API tests replace the application's `DbContext` configuration with the test database, so they do not know the provider either. Moving to SQL Server means adding the provider, its migrations, `Databases/SqlServer/SqlServerTestDatabase` (for example with Testcontainers) and three one-line classes. The tests do not change, and the same suite then proves the behaviour on both databases.
 
 ## Known limitations
 
@@ -71,7 +84,7 @@ dotnet run --launch-profile http
 - **Hangfire storage is in memory.** The schedule is registered again on every startup, but job history is lost on restart.
 - **Dashboard access.** The Hangfire dashboard allows local requests only. A deployment needs authentication and a role-based filter (SEC-1, SEC-3).
 - **Migrations and seeding run at startup.** This is fine for one instance, but it should be a deployment step once there are several (SCL-1).
-- **Tests on SQLite only.** The integration tests do not cover a production database such as SQL Server (TST-2).
+- **Tests on SQLite only.** The integration tests do not cover a production database such as SQL Server yet (TST-2). They are written to make that a small step: see below.
 
 ## Commit history
 
