@@ -3,6 +3,8 @@
   <Project Path="Demo.Application/Demo.Application.csproj" />
   <Project Path="Demo.Domain/Demo.Domain.csproj" />
   <Project Path="Demo.Infrastructure/Demo.Infrastructure.csproj" />
-  <Project Path="Demo.IntegrationTests/Demo.IntegrationTests.csproj" />
-  <Project Path="Demo.UnitTests/Demo.UnitTests.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="../tests/Demo.IntegrationTests/Demo.IntegrationTests.csproj" />
+    <Project Path="../tests/Demo.UnitTests/Demo.UnitTests.csproj" />
+  </Folder>
 </Solution>

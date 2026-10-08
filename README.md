@@ -12,7 +12,10 @@ The codebase is structured following **Clean Architecture** and **Domain-Driven 
 * **`Demo.Application`**: Contains the business orchestration logic (e.g., `InventoryModule`). This layer coordinates the workflow.
 * **`Demo.Domain`**: The core of the system. It contains domain entities (like `Product`), interfaces (e.g., `IProductRepository`), and core business logic.
 * **`Demo.Infrastructure`**: Implementation details. This layer handles data persistence using Entity Framework Core (SQLite), external services, and background job processing with Hangfire.
-* **`Demo.UnitTests`**: The test suite project validating core behaviors.
+* **`tests/Demo.UnitTests`**: Unit tests for the domain and application logic (no database).
+* **`tests/Demo.IntegrationTests`**: Integration tests for the repositories, the exchange-rate HTTP client and the API.
+
+Application code lives in `src/` and tests in `tests/`. The solution file is `src/DemoSolution.slnx`.
 
 ## 🛠️ Tech Stack
 * **Framework:** .NET 10.0

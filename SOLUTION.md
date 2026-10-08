@@ -68,7 +68,7 @@ dotnet run --launch-profile http
 **The integration tests do not depend on a database provider.** Database tests passing on SQLite would prove nothing once production uses another database. So each suite is written once, against an `ITestDatabase` abstraction, and a small class per provider runs it:
 
 ```
-Demo.IntegrationTests/
+tests/Demo.IntegrationTests/
   Infrastructure/Persistence/ExchangeRateRepositoryTests<TDatabase>   ← the tests, written once
   Infrastructure/Persistence/ProductRepositoryTests<TDatabase>
   Api/ProductsApiTests<TDatabase>        ← the API on whichever database the fixture provides
