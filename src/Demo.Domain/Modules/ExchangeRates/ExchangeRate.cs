@@ -1,3 +1,5 @@
+using Demo.Domain.Common;
+
 namespace Demo.Domain.Modules.ExchangeRates
 {
     /// <summary>
@@ -5,8 +7,26 @@ namespace Demo.Domain.Modules.ExchangeRates
     /// </summary>
     public class ExchangeRate
     {
-        public long SnapshotId { get; set; }
-        public required string QuoteCurrency { get; set; }
-        public decimal Rate { get; set; }
+        // For EF Core.
+        private ExchangeRate()
+        {
+        }
+
+        internal ExchangeRate(string quoteCurrency, decimal rate)
+        {
+            CurrencyCodes.EnsureValid(quoteCurrency, "Quote currency");
+
+            if (rate <= 0)
+            {
+                throw new DomainException($"The exchange rate for {quoteCurrency} must be greater than zero, got {rate}.");
+            }
+
+            QuoteCurrency = quoteCurrency;
+            Rate = rate;
+        }
+
+        public long SnapshotId { get; private set; }
+        public string QuoteCurrency { get; private set; } = null!;
+        public decimal Rate { get; private set; }
     }
 }

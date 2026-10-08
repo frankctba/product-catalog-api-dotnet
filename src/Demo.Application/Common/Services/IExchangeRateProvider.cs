@@ -1,5 +1,3 @@
-using Demo.Domain.Modules.ExchangeRates;
-
 namespace Demo.Application.Common.Services
 {
     /// <summary>
@@ -7,6 +5,8 @@ namespace Demo.Application.Common.Services
     /// </summary>
     public interface IExchangeRateProvider
     {
-        Task<ExchangeRateSnapshot> GetLatestRatesAsync(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken);
+        /// <exception cref="ExchangeRateSyncException">A failure retrying will not fix, such as a missing or rejected API key.</exception>
+        /// <exception cref="HttpRequestException">A transient failure, such as a network error or a 5xx response.</exception>
+        Task<ProviderRates> GetLatestRatesAsync(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken);
     }
 }

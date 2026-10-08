@@ -6,10 +6,12 @@ namespace Demo.Infrastructure.Persistence;
 public class ExchangeRateRepository : IExchangeRateRepository
 {
     private readonly DemoDbContext _dbContext;
+    private readonly TimeProvider _timeProvider;
 
-    public ExchangeRateRepository(DemoDbContext dbContext)
+    public ExchangeRateRepository(DemoDbContext dbContext, TimeProvider timeProvider)
     {
         _dbContext = dbContext;
+        _timeProvider = timeProvider;
     }
 
     public async Task<bool> SaveSnapshotAsync(ExchangeRateSnapshot snapshot, CancellationToken cancellationToken)
@@ -31,29 +33,18 @@ public class ExchangeRateRepository : IExchangeRateRepository
             .Where(r => r.BaseCurrency == snapshot.BaseCurrency)
             .ToDictionaryAsync(r => r.QuoteCurrency, cancellationToken);
 
-        var now = DateTime.UtcNow;
+        var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
 
         foreach (var rate in snapshot.Rates)
         {
-            if (!latestRates.TryGetValue(rate.QuoteCurrency, out var latest))
+            if (latestRates.TryGetValue(rate.QuoteCurrency, out var latest))
             {
-                _dbContext.LatestExchangeRates.Add(new LatestExchangeRate
-                {
-                    BaseCurrency = snapshot.BaseCurrency,
-                    QuoteCurrency = rate.QuoteCurrency,
-                    Rate = rate.Rate,
-                    RateTimestampUtc = snapshot.RateTimestampUtc,
-                    UpdatedAtUtc = now,
-                    Snapshot = snapshot
-                });
+                // The domain decides whether the rate moves forward; older publications are kept in the history only.
+                latest.UpdateFrom(snapshot, rate, nowUtc);
             }
-            else if (latest.RateTimestampUtc < snapshot.RateTimestampUtc)
+            else
             {
-                // Only move forward: an older publication is kept in the history but never replaces a newer rate.
-                latest.Rate = rate.Rate;
-                latest.RateTimestampUtc = snapshot.RateTimestampUtc;
-                latest.UpdatedAtUtc = now;
-                latest.Snapshot = snapshot;
+                _dbContext.LatestExchangeRates.Add(LatestExchangeRate.Create(snapshot, rate, nowUtc));
             }
         }
 

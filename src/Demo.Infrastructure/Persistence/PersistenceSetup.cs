@@ -37,9 +37,9 @@ public static class PersistenceSetup
         if (!await db.Products.AnyAsync())
         {
             db.Products.AddRange(
-                new Product { Sku = "SKU1", Name = "Classic Leather Jacket", Price = 103.30M },
-                new Product { Sku = "SKU2", Name = "Wool Overcoat", Price = 102.20M },
-                new Product { Sku = "SKU3", Name = "Canvas Sneakers", Price = 59.99M });
+                new Product("SKU1", "Classic Leather Jacket", 103.30M),
+                new Product("SKU2", "Wool Overcoat", 102.20M),
+                new Product("SKU3", "Canvas Sneakers", 59.99M));
 
             await db.SaveChangesAsync();
         }

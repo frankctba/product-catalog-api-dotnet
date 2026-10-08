@@ -2,7 +2,10 @@ using Demo.Domain.Modules.ExchangeRates;
 
 namespace Demo.UnitTests.TestDoubles;
 
-/// <summary>In-memory version of the repository rules: idempotent snapshots, latest rates only move forward.</summary>
+/// <summary>
+/// In-memory repository. The "only move forward" rule comes from <see cref="LatestExchangeRate"/> itself,
+/// so this fake does not duplicate domain logic; the real EF Core repository is covered by the integration tests.
+/// </summary>
 internal class FakeExchangeRateRepository : IExchangeRateRepository
 {
     public List<ExchangeRateSnapshot> Snapshots { get; } = [];
@@ -22,12 +25,11 @@ internal class FakeExchangeRateRepository : IExchangeRateRepository
             var latest = Latest.SingleOrDefault(r => r.BaseCurrency == snapshot.BaseCurrency && r.QuoteCurrency == rate.QuoteCurrency);
             if (latest is null)
             {
-                Latest.Add(new LatestExchangeRate { BaseCurrency = snapshot.BaseCurrency, QuoteCurrency = rate.QuoteCurrency, Rate = rate.Rate, RateTimestampUtc = snapshot.RateTimestampUtc });
+                Latest.Add(LatestExchangeRate.Create(snapshot, rate, snapshot.FetchedAtUtc));
             }
-            else if (latest.RateTimestampUtc < snapshot.RateTimestampUtc)
+            else
             {
-                latest.Rate = rate.Rate;
-                latest.RateTimestampUtc = snapshot.RateTimestampUtc;
+                latest.UpdateFrom(snapshot, rate, snapshot.FetchedAtUtc);
             }
         }
 

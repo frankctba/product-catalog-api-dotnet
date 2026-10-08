@@ -1,5 +1,6 @@
 using Demo.Application.Common;
 using Demo.Application.Common.Services;
+using Demo.Domain.Common;
 using Demo.Domain.Modules.ExchangeRates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,6 +13,7 @@ namespace Demo.Application.Modules
         /// Fetches the latest rates for the supported currencies and stores them (history + latest).
         /// Safe to run more than once: an already stored snapshot is skipped.
         /// </summary>
+        /// <exception cref="ExchangeRateSyncException">A failure retrying will not fix.</exception>
         Task SyncLatestRatesAsync(CancellationToken cancellationToken);
 
         /// <summary>True when a latest rate is stored for every supported currency.</summary>
@@ -23,18 +25,21 @@ namespace Demo.Application.Modules
         private readonly ILogger _logger;
         private readonly IExchangeRateProvider _exchangeRateProvider;
         private readonly IExchangeRateRepository _exchangeRateRepository;
+        private readonly TimeProvider _timeProvider;
         private readonly CurrencyOptions _currencyOptions;
 
         public ExchangeRateSyncModule(
             ILogger<ExchangeRateSyncModule> logger,
             IExchangeRateProvider exchangeRateProvider,
             IExchangeRateRepository exchangeRateRepository,
+            TimeProvider timeProvider,
             IOptions<CurrencyOptions> currencyOptions
         )
         {
             _logger = logger;
             _exchangeRateProvider = exchangeRateProvider;
             _exchangeRateRepository = exchangeRateRepository;
+            _timeProvider = timeProvider;
             _currencyOptions = currencyOptions.Value;
         }
 
@@ -43,12 +48,9 @@ namespace Demo.Application.Modules
             var baseCurrency = _currencyOptions.BaseCurrency;
             var currencies = _currencyOptions.SupportedCurrencies;
 
-            var snapshot = await _exchangeRateProvider.GetLatestRatesAsync(baseCurrency, currencies, cancellationToken);
+            var providerRates = await _exchangeRateProvider.GetLatestRatesAsync(baseCurrency, currencies, cancellationToken);
 
-            Validate(snapshot, baseCurrency, currencies);
-
-            // Keep only the configured currencies, in case the provider returns more.
-            snapshot.Rates = snapshot.Rates.Where(r => currencies.Contains(r.QuoteCurrency)).ToList();
+            var snapshot = CreateSnapshot(providerRates, baseCurrency, currencies);
 
             var saved = await _exchangeRateRepository.SaveSnapshotAsync(snapshot, cancellationToken);
 
@@ -73,26 +75,39 @@ namespace Demo.Application.Modules
             return _currencyOptions.SupportedCurrencies.All(c => latestRates.Any(r => r.QuoteCurrency == c));
         }
 
-        private static void Validate(ExchangeRateSnapshot snapshot, string baseCurrency, IReadOnlyCollection<string> currencies)
+        /// <summary>
+        /// Checks the provider answered what was asked for, keeps only the configured currencies,
+        /// and builds the domain snapshot (which enforces its own invariants, e.g. positive rates).
+        /// </summary>
+        private ExchangeRateSnapshot CreateSnapshot(ProviderRates providerRates, string baseCurrency, IReadOnlyCollection<string> currencies)
         {
-            if (!string.Equals(snapshot.BaseCurrency, baseCurrency, StringComparison.OrdinalIgnoreCase))
+            if (providerRates.BaseCurrency != baseCurrency)
             {
-                throw new InvalidOperationException(
-                    $"The exchange-rate provider returned base currency '{snapshot.BaseCurrency}', expected '{baseCurrency}'.");
+                throw new ExchangeRateSyncException(
+                    $"The exchange-rate provider returned base currency '{providerRates.BaseCurrency}', expected '{baseCurrency}'.");
             }
 
-            var missing = currencies.Where(c => snapshot.Rates.All(r => r.QuoteCurrency != c)).ToList();
+            var missing = currencies.Where(c => !providerRates.Rates.ContainsKey(c)).ToList();
             if (missing.Count > 0)
             {
-                throw new InvalidOperationException(
+                throw new ExchangeRateSyncException(
                     $"The exchange-rate provider did not return rates for: {string.Join(", ", missing)}.");
             }
 
-            var invalid = snapshot.Rates.Where(r => r.Rate <= 0).Select(r => r.QuoteCurrency).ToList();
-            if (invalid.Count > 0)
+            var configuredRates = currencies.ToDictionary(c => c, c => providerRates.Rates[c]);
+
+            try
             {
-                throw new InvalidOperationException(
-                    $"The exchange-rate provider returned non-positive rates for: {string.Join(", ", invalid)}.");
+                return ExchangeRateSnapshot.Create(
+                    providerRates.Provider,
+                    baseCurrency,
+                    providerRates.RateTimestampUtc,
+                    _timeProvider.GetUtcNow().UtcDateTime,
+                    configuredRates);
+            }
+            catch (DomainException ex)
+            {
+                throw new ExchangeRateSyncException($"The exchange-rate provider returned invalid data: {ex.Message}", ex);
             }
         }
     }

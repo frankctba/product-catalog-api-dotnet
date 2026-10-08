@@ -1,7 +1,8 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Demo.Application.Common;
 using Demo.Application.Common.Services;
-using Demo.Domain.Modules.ExchangeRates;
 using Microsoft.Extensions.Options;
 
 namespace Demo.Infrastructure.ExchangeRates;
@@ -24,11 +25,11 @@ public class OpenExchangeRatesClient : IExchangeRateProvider
         _options = options.Value;
     }
 
-    public async Task<ExchangeRateSnapshot> GetLatestRatesAsync(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken)
+    public async Task<ProviderRates> GetLatestRatesAsync(string baseCurrency, IReadOnlyCollection<string> currencies, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_options.AppId))
         {
-            throw new InvalidOperationException(
+            throw new ExchangeRateSyncException(
                 $"{OpenExchangeRatesOptions.SectionName}:AppId is not configured. Set it with user-secrets or an environment variable.");
         }
 
@@ -50,26 +51,30 @@ public class OpenExchangeRatesClient : IExchangeRateProvider
         if (!response.IsSuccessStatusCode)
         {
             var error = await TryReadError(response, cancellationToken);
-            throw new HttpRequestException(
-                $"Open Exchange Rates returned {(int)response.StatusCode}: {error?.Message} {error?.Description}".TrimEnd(),
-                inner: null,
-                response.StatusCode);
+            var message = $"Open Exchange Rates returned {(int)response.StatusCode}: {error?.Message} {error?.Description}".TrimEnd();
+
+            // 4xx (bad key, plan does not allow the request, ...) will fail again on retry; 5xx, 408 and 429 may not.
+            if (IsPermanentFailure(response.StatusCode))
+            {
+                throw new ExchangeRateSyncException(message);
+            }
+
+            throw new HttpRequestException(message, inner: null, response.StatusCode);
         }
 
         var body = await response.Content.ReadFromJsonAsync<LatestRatesResponse>(cancellationToken)
-            ?? throw new InvalidOperationException("Open Exchange Rates returned an empty response.");
+            ?? throw new ExchangeRateSyncException("Open Exchange Rates returned an empty response.");
 
-        return new ExchangeRateSnapshot
-        {
-            Provider = ProviderName,
-            BaseCurrency = body.Base.ToUpperInvariant(),
-            RateTimestampUtc = DateTimeOffset.FromUnixTimeSeconds(body.Timestamp).UtcDateTime,
-            FetchedAtUtc = DateTime.UtcNow,
-            Rates = body.Rates
-                .Select(r => new ExchangeRate { QuoteCurrency = r.Key.ToUpperInvariant(), Rate = r.Value })
-                .ToList()
-        };
+        return new ProviderRates(
+            ProviderName,
+            body.Base.ToUpperInvariant(),
+            DateTimeOffset.FromUnixTimeSeconds(body.Timestamp).UtcDateTime,
+            body.Rates.ToDictionary(r => r.Key.ToUpperInvariant(), r => r.Value));
     }
+
+    private static bool IsPermanentFailure(HttpStatusCode statusCode) =>
+        (int)statusCode is >= 400 and < 500
+        && statusCode is not HttpStatusCode.RequestTimeout and not HttpStatusCode.TooManyRequests;
 
     private static async Task<ErrorResponse?> TryReadError(HttpResponseMessage response, CancellationToken cancellationToken)
     {

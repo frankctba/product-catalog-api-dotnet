@@ -37,6 +37,7 @@ public class DemoDbContext : DbContext
             b.HasIndex(s => new { s.Provider, s.BaseCurrency, s.RateTimestampUtc }).IsUnique();
 
             b.HasMany(s => s.Rates).WithOne().HasForeignKey(r => r.SnapshotId);
+            b.Navigation(s => s.Rates).UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         modelBuilder.Entity<ExchangeRate>(b =>

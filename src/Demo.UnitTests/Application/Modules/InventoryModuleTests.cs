@@ -8,7 +8,7 @@ namespace Demo.UnitTests.Application.Modules;
 
 public class InventoryModuleTests
 {
-    private static readonly DateTime Monday = new(2026, 9, 28, 5, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Monday = SampleData.Monday;
 
     private readonly FakeExchangeRateRepository _exchangeRates = new();
     private readonly InventoryModule _module;
