@@ -1,5 +1,6 @@
 using Demo.Application.Modules;
 using Demo.Domain.Modules.ExchangeRates;
+using Demo.UnitTests.TestData;
 using Demo.UnitTests.TestDoubles;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -15,10 +16,10 @@ public class ExchangeRateSyncModuleTests
         new(NullLogger<ExchangeRateSyncModule>.Instance,
             new FakeExchangeRateProvider(providerResponse),
             _repository,
-            TestData.CurrencyOptions());
+            SampleData.CurrencyOptions());
 
     private static ExchangeRateSnapshot AllRates(DateTime timestamp) =>
-        TestData.Snapshot(timestamp, ("EUR", 0.9201M), ("CAD", 1.3816M), ("GBP", 0.7905M), ("CHF", 0.8641M));
+        SampleData.Snapshot(timestamp, ("EUR", 0.9201M), ("CAD", 1.3816M), ("GBP", 0.7905M), ("CHF", 0.8641M));
 
     [Fact]
     public async Task SyncLatestRates_StoresHistoryAndLatestRates()
@@ -70,7 +71,7 @@ public class ExchangeRateSyncModuleTests
     [Fact]
     public async Task SyncLatestRates_MissingCurrency_ThrowsAndStoresNothing()
     {
-        var module = CreateModule(() => TestData.Snapshot(Monday, ("EUR", 0.9201M), ("CAD", 1.3816M)));
+        var module = CreateModule(() => SampleData.Snapshot(Monday, ("EUR", 0.9201M), ("CAD", 1.3816M)));
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => module.SyncLatestRates(CancellationToken.None));
 

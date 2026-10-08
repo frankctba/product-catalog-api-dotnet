@@ -1,5 +1,6 @@
 using Demo.Application.Common;
 using Demo.Application.Modules;
+using Demo.UnitTests.TestData;
 using Demo.UnitTests.TestDoubles;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -16,9 +17,9 @@ public class InventoryModuleTests
     {
         _module = new InventoryModule(
             NullLogger<InventoryModule>.Instance,
-            new FakeProductRepository(TestData.Products()),
+            new FakeProductRepository(SampleData.Products()),
             _exchangeRates,
-            TestData.CurrencyOptions());
+            SampleData.CurrencyOptions());
     }
 
     [Theory]
@@ -41,8 +42,8 @@ public class InventoryModuleTests
     [InlineData(" Eur ")]
     public async Task GetProducts_WithSupportedCurrency_ConvertsWithLatestRate(string currency)
     {
-        await _exchangeRates.SaveSnapshot(TestData.Snapshot(Monday.AddDays(-7), ("EUR", 0.9184M)), CancellationToken.None);
-        await _exchangeRates.SaveSnapshot(TestData.Snapshot(Monday, ("EUR", 0.9201M)), CancellationToken.None);
+        await _exchangeRates.SaveSnapshot(SampleData.Snapshot(Monday.AddDays(-7), ("EUR", 0.9184M)), CancellationToken.None);
+        await _exchangeRates.SaveSnapshot(SampleData.Snapshot(Monday, ("EUR", 0.9201M)), CancellationToken.None);
 
         var result = await _module.GetProducts(currency, 1, 50, CancellationToken.None);
 

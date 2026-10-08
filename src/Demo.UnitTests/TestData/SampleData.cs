@@ -3,9 +3,9 @@ using Demo.Domain.Modules.ExchangeRates;
 using Demo.Domain.Modules.Inventory;
 using Microsoft.Extensions.Options;
 
-namespace Demo.UnitTests.TestDoubles;
+namespace Demo.UnitTests.TestData;
 
-internal static class TestData
+internal static class SampleData
 {
     public static IOptions<CurrencyOptions> CurrencyOptions() => Options.Create(new CurrencyOptions
     {
