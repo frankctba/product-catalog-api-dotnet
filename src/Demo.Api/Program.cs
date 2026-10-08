@@ -4,13 +4,15 @@ using Demo.Infrastructure.ExchangeRates;
 using Demo.Infrastructure.Persistence;
 using Demo.Api;
 using Hangfire;
+using Hangfire.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml")));
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 
@@ -32,8 +34,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Add Hangfire Dashboard
-app.UseHangfireDashboard();
+// Add Hangfire Dashboard. Only local requests are allowed: there is no authentication yet (SEC-3),
+// and the dashboard can trigger and delete jobs. A deployment needs a role-based filter instead.
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new LocalRequestsOnlyAuthorizationFilter()]
+});
 
 app.MapControllers();
 
