@@ -44,3 +44,6 @@ await app.Services.InitializeDatabaseAsync();
 await app.Services.ScheduleExchangeRateSyncAsync();
 
 app.Run();
+
+// Exposed so the integration tests can host the API with WebApplicationFactory<Program>.
+public partial class Program;

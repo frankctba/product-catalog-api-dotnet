@@ -10,12 +10,17 @@ public static class PersistenceSetup
 {
     public const string ConnectionStringName = "DemoDb";
 
-    public static IServiceCollection AddInfrastructurePersistence(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructurePersistence(this IServiceCollection services)
     {
-        var connectionString = configuration.GetConnectionString(ConnectionStringName)
-            ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' is not configured.");
+        // The connection string is read when the DbContext is configured, not at registration,
+        // so configuration added later (e.g. by integration tests) is taken into account.
+        services.AddDbContext<DemoDbContext>((serviceProvider, options) =>
+        {
+            var connectionString = serviceProvider.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionStringName)
+                ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' is not configured.");
 
-        services.AddDbContext<DemoDbContext>(options => options.UseSqlite(connectionString));
+            options.UseSqlite(connectionString);
+        });
 
         // Scoped, like the DbContext they wrap: one per HTTP request or Hangfire job.
         services.AddScoped<IProductRepository, ProductRepository>();

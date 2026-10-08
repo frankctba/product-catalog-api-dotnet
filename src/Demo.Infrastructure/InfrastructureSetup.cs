@@ -11,7 +11,7 @@ public static class InfrastructureSetup
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddInfrastructurePersistence(configuration);
+        services.AddInfrastructurePersistence();
         services.AddInfrastructureExchangeRates(configuration);
         services.AddInfrastructureHangfire();
 
