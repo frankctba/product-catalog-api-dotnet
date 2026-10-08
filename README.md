@@ -15,7 +15,7 @@ The codebase is structured following **Clean Architecture** and **Domain-Driven 
 * **`tests/Demo.UnitTests`**: Unit tests for the domain and application logic (no database).
 * **`tests/Demo.IntegrationTests`**: Integration tests for the repositories, the exchange-rate HTTP client and the API.
 
-Application code lives in `src/` and tests in `tests/`. The solution file is `src/DemoSolution.slnx`.
+Application code lives in `src/` and tests in `tests/`. The solution file, `DemoSolution.slnx`, is at the root.
 
 ## 🛠️ Tech Stack
 * **Framework:** .NET 10.0
@@ -33,7 +33,7 @@ Application code lives in `src/` and tests in `tests/`. The solution file is `sr
 
 1. **Restore dependencies and build the solution** (from the root directory):
    ```bash
-   dotnet build src/DemoSolution.slnx
+   dotnet build
    ```
 
 2. **Run the API:**
@@ -60,7 +60,7 @@ The database schema is managed with EF Core migrations and applied at startup. A
 ### Running Tests
 To execute the unit and integration tests, run the following command from the root directory:
 ```bash
-dotnet test src/DemoSolution.slnx
+dotnet test
 ```
 
 ---

@@ -28,7 +28,7 @@ dotnet run --launch-profile http
 
 - Swagger: http://localhost:5022/swagger. Hangfire: http://localhost:5022/hangfire.
 - Without an App ID the API still runs, and conversions return 503 until rates are stored.
-- `dotnet test src/DemoSolution.slnx` runs 74 tests. CI runs the same tests on every push and fails on vulnerable packages.
+- `dotnet test` (from the root) runs 74 tests. CI runs the same tests on every push and fails on vulnerable packages.
 
 ## Architecture
 

@@ -18,17 +18,17 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore
-        run: dotnet restore src/DemoSolution.slnx
+        run: dotnet restore DemoSolution.slnx
 
       - name: Build
-        run: dotnet build src/DemoSolution.slnx --no-restore --configuration Release
+        run: dotnet build DemoSolution.slnx --no-restore --configuration Release
 
       - name: Test (unit + integration)
-        run: dotnet test src/DemoSolution.slnx --no-build --configuration Release --logger trx --results-directory TestResults
+        run: dotnet test DemoSolution.slnx --no-build --configuration Release --logger trx --results-directory TestResults
 
       - name: Fail on vulnerable packages
         run: |
-          dotnet list src/DemoSolution.slnx package --vulnerable --include-transitive | tee vulnerable.txt
+          dotnet list DemoSolution.slnx package --vulnerable --include-transitive | tee vulnerable.txt
           if grep -q "has the following vulnerable packages" vulnerable.txt; then exit 1; fi
 
       - name: Upload test results
