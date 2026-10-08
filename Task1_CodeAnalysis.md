@@ -56,7 +56,7 @@ The changes needed for Tasks 2 and 3, plus the most important findings, were imp
 | ID | Finding | Priority | Suggested change |
 |---|---|---|---|
 | SEC-1 | Hangfire dashboard authorization | **P1** | Partly done: only local requests are allowed, explicitly. A deployment needs authentication (SEC-3) and a role-based filter. |
-| PER-4 | Database provider fixed to SQLite | P2 | Choose the provider by configuration, and use a shared database server in production |
+| PER-4 | Database provider fixed to SQLite | P2 | Choose the provider by configuration, and use a shared database server in production. The design-time factory (`SqliteDesignTimeDbContextFactory`) and the migrations are SQLite-specific: the new provider needs its own migration set and factory, or new migrations are silently generated for SQLite. |
 | PER-5 | `Sku` has no length or collation: case sensitivity differs between databases | P2 | Decide whether `sku1` and `SKU1` are the same product, and set the length and collation explicitly |
 | BG-3 | A Monday run is lost if the app is down | P2 | At startup, catch up when the latest rates are older than the last scheduled run |
 | BG-4 | Hangfire storage is in memory | P2 | Persistent, shared storage. Job history is lost on restart, and with several instances the job would run once per instance. |
