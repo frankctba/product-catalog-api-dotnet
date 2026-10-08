@@ -3,6 +3,7 @@ using Demo.Application.Modules;
 using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -29,11 +30,24 @@ public static class ExchangeRatesSetup
 
         // Typed clients are transient by design: IHttpClientFactory manages the underlying handlers.
         services.AddHttpClient<IExchangeRateProvider, OpenExchangeRatesClient>((serviceProvider, client) =>
-        {
-            var options = serviceProvider.GetRequiredService<IOptions<OpenExchangeRatesOptions>>().Value;
-            client.BaseAddress = new Uri(options.BaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-        });
+            {
+                var options = serviceProvider.GetRequiredService<IOptions<OpenExchangeRatesOptions>>().Value;
+                client.BaseAddress = new Uri(options.BaseUrl);
+            })
+            // Retries transient failures (5xx, 408, 429, network errors) with backoff, plus circuit breaker and timeouts.
+            // 4xx answers such as a rejected API key are not retried.
+            .AddStandardResilienceHandler()
+            .Configure((resilience, serviceProvider) =>
+            {
+                var attemptTimeout = TimeSpan.FromSeconds(
+                    serviceProvider.GetRequiredService<IOptions<OpenExchangeRatesOptions>>().Value.TimeoutSeconds);
+
+                resilience.AttemptTimeout.Timeout = attemptTimeout;
+                // Room for the initial attempt plus the default 3 retries.
+                resilience.TotalRequestTimeout.Timeout = attemptTimeout * 4;
+                // The circuit breaker requires a sampling window of at least twice the attempt timeout.
+                resilience.CircuitBreaker.SamplingDuration = attemptTimeout * 3;
+            });
 
         // Hangfire creates a DI scope per job execution, so the job and its dependencies share one DbContext.
         services.AddScoped<ExchangeRateSyncJob>();
