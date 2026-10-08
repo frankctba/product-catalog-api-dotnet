@@ -1,8 +1,9 @@
 using Demo.Application.Common;
 using Demo.Application.Modules;
+using Demo.UnitTests.TestDoubles;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Demo.UnitTests;
+namespace Demo.UnitTests.Application.Modules;
 
 public class InventoryModuleTests
 {

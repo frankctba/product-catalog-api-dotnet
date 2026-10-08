@@ -1,7 +1,7 @@
 using System.Globalization;
 using Demo.Application.Modules;
 
-namespace Demo.UnitTests;
+namespace Demo.UnitTests.Application.Modules;
 
 public class CurrencyConverterTests
 {
