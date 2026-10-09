@@ -56,12 +56,13 @@ The changes needed for Tasks 2 and 3, plus the most important findings, were imp
 | ID | Finding | Priority | Suggested change |
 |---|---|---|---|
 | SEC-1 | Hangfire dashboard authorization | **P1** | Partly done: only local requests are allowed, explicitly. A deployment needs authentication (SEC-3) and a role-based filter. |
-| PER-4 | Database provider fixed to SQLite | P2 | Choose the provider by configuration, and use a shared database server in production. The design-time factory (`SqliteDesignTimeDbContextFactory`) and the migrations are SQLite-specific: the new provider needs its own migration set and factory, or new migrations are silently generated for SQLite. |
+| PER-4 | Database provider fixed to SQLite | P2 | Choose the provider by configuration, with SQL Server as the production database. The design-time factory (`SqliteDesignTimeDbContextFactory`) and the migrations are SQLite-specific: SQL Server needs its own migration set and factory, or new migrations are silently generated for SQLite. Goes together with PER-5, PER-11 and TST-2. |
 | PER-5 | `Sku` has no length or collation: case sensitivity differs between databases | P2 | Decide whether `sku1` and `SKU1` are the same product, and set the length and collation explicitly |
 | BG-3 | A Monday run is lost if the app is down | P2 | At startup, catch up when the latest rates are older than the last scheduled run |
 | BG-4 | Hangfire storage is in memory | P2 | Persistent, shared storage. Job history is lost on restart, and with several instances the job would run once per instance. |
-| CFG-2 | Base currency fixed to USD; prices carry no currency | P2 | Base currency per deployment, a currency stored with each price, cross rates |
+| CFG-2 | Base currency fixed to USD; prices carry no currency | P2 | Base currency per deployment, a currency stored with each price, cross rates. Combined with multiple instances, each deployment has its own base currency, configuration and database. |
 | SCL-1 | Migrations and seeding run at startup | P2 | Run them as a deployment step before running several instances |
+| PER-11 | No database connection resilience | P2 | `EnableRetryOnFailure` when using SQL Server, so transient connection errors are retried |
 | BG-5 | Hangfire options (workers, queues) not configurable | P3 | Bind them from configuration |
 | API-2 | `sku` not validated | P3 | Validate length and format, and return 400 |
 | ARC-2 | Infrastructure gets the Domain project only through Application | P3 | Reference Domain directly |
@@ -73,6 +74,8 @@ The changes needed for Tasks 2 and 3, plus the most important findings, were imp
 | SCL-2 | An in-process cache can't be cleared on other instances | P3 | Short expiry, or a shared cache |
 | SCL-3 | Rate limiting would apply per instance | P3 | Enforce limits at the gateway |
 | SCL-4 | No forwarded headers behind a load balancer | P3 | `UseForwardedHeaders` |
+| OBS-2 | No tracing or metrics | P3 | OpenTelemetry: traces for HTTP requests, EF Core, the provider calls and the sync job, plus metrics such as sync duration and rate age, exported via OTLP |
+| OPS-1 | No container setup | P3 | Dockerfile for the API, and `docker-compose` with the API and SQL Server, for local runs and as the base for deploying several instances |
 | BLD-1 | Project settings repeated in every `.csproj` | P4 | `Directory.Build.props` and central package management. The unused OpenApi package was already removed. |
 | DOM-5 | `IMessagePublisher` placed in Domain | P4 | Move it to Application |
 | SCL-5 | No connection pooling or output caching | P4 | `AddDbContextPool`, and output caching per currency |
